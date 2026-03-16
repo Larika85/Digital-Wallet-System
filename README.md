@@ -1,156 +1,206 @@
 # Digital Wallet Management System
 
-This project is made by Team 25, a simple Digital Wallet Management System implemented in C++ that allows users to create accounts, transfer funds, view transaction history, and manage wallet balances. The system is designed to be a basic simulation of a wallet system with features such as user registration, money transfers, account merging, and transaction tracking.
+A command-line Digital Wallet Management System written in C++ that simulates core wallet operations — account registration, secure login, fund transfers, balance management, and transaction tracking. Built with C++11 using OOP principles including inheritance, operator overloading, and file-based persistence.
 
 ## Features
 
-- **User Registration**: Allows users to register with a unique ID, name, and an initial balance.
-- **Login**: Secure login using a username and password.
-- **Fund Transfer**: Users can send funds from their wallet to another user's wallet. The system tracks each transaction with an ID, date, sender, and receiver.
-- **Transaction History**: Users can view their past transactions.
-- **Balance Management**: Users can view their current balance, add funds, or deduct balances.
-- **Account Merging**: Two users' accounts can be merged into one, combining their balances and transactions.
-- **Data Persistence**: User data and transactions are saved to a file (`users.txt`), ensuring that the data is persistent across sessions.
-- **Account Deletion**: Remove an account entirely from the system.
+- **User Registration**: Register with a unique username, password, display name, and initial balance. Duplicate usernames are detected and rejected before registration.
+- **Secure Login**: Authenticate with a username and password to access wallet operations.
+- **Add Funds**: Deposit an amount into your wallet; balance is updated and saved immediately.
+- **Deduct Funds**: Withdraw from your wallet; rejected if balance is insufficient.
+- **Fund Transfers**: Transfer money to another registered user. Date is validated in `YYYY-MM-DD` format (including leap year checks). Both sender and receiver get the transaction logged.
+- **Transaction History**: View all transactions associated with your account.
+- **Balance Display**: Check your current wallet balance.
+- **Account Merging**: Merge a second verified account into your own — balances are combined and the second account is removed.
+- **Account Deletion**: Permanently delete your account from the system.
+- **Data Persistence**: User records are loaded from and saved to `users.txt` after every operation.
 
-## Files in the Project
+## Project Structure
 
-- **Transaction.h / Transaction.cpp**: Contains the `Transaction` class, which defines the structure and functionality of a transaction (ID, amount, sender, receiver, and date).
-- **User.h / User.cpp**: Contains the `User` class, which defines a user, their balance, transactions, and associated methods (e.g., adding funds, viewing balance, transaction history).
-- **Wallet.h / Wallet.cpp**: Contains the `Wallet` class, which manages the entire system of users, allowing for registration, fund transfers, user removal, and account merging.
-- **main.cpp**:
-  - Provides the main user interface for interacting with the system.
-- **users.txt**:
-  - A text file to store user data persistently between sessions.
-- **Makefile**: A build file used for compiling the project. It specifies compiler flags, object files, and build targets.
+| File | Description |
+|---|---|
+| `Transaction.h / Transaction.cpp` | `Transaction` class — stores ID, amount, date, sender, and receiver; inherits from abstract `BaseTransaction` |
+| `User.h / User.cpp` | `User` class — stores username, password, name, balance, and transaction history; inherits from abstract `BaseUser` |
+| `Wallet.h / Wallet.cpp` | `Wallet` class — manages all users and operations; handles file I/O, transfers, merging; inherits from abstract `WalletBase` |
+| `date.h / date.cpp` | `Date` class — parses and validates `YYYY-MM-DD` strings including leap year logic |
+| `main.cpp` | Entry point — interactive menu-driven CLI |
+| `users.txt` | Flat-file store for persistent user data |
+| `Makefile` | Build configuration |
 
-## Compilation and Usage
+## Design
+
+The project uses **abstract base classes** for its three core types:
+
+| Abstract Class | Pure Virtual Method |
+|---|---|
+| `BaseTransaction` | `displayTransaction()` |
+| `BaseUser` | `showDetails()` |
+| `WalletBase` | `registerUser(...)` |
+
+**Operator overloading** is used throughout:
+
+- `User::operator+(const User&)` — merges two users; adds the second user's balance into the first
+- `User::operator<<` / `operator>>` — file serialization (username, password, name, balance)
+- `Transaction::operator<<` — formatted output of transaction details
+- `Date::operator<<` / `operator>>` — date string I/O
+
+## Getting Started
 
 ### Prerequisites
 
-Ensure that you have a C++ compiler installed (e.g., `g++` for Linux or macOS). The code has been tested with C++11 standard, so make sure to compile with at least this version.
+A C++ compiler with C++11 support or later (e.g., `g++` on Linux or macOS).
 
-### Building the Project
+### Build
 
-1. Open a terminal and navigate to the directory containing the project files.
-2. Run the following command to compile the project:
+```bash
+make
+```
 
-   ```bash
-   make
-   ```
+Compiles all `.cpp` files, places object files in the `obj/` directory, and produces the `DigitalWalletSystem` executable.
 
-   This will generate the executable `DigitalWalletSystem`.
-
-### Running the Program
-
-Once the build is complete, you can run the program by typing:
+### Run
 
 ```bash
 ./DigitalWalletSystem
 ```
 
-This will start the wallet management system, allowing you to register users, add funds, transfer money, and perform other actions.
+### Clean
 
-### Makefile Commands
+```bash
+make clean
+```
 
-- **Build**: `make` - Compiles the source code and generates the executable.
-- **Clean**: `make clean` - Removes object files and the executable.
+Removes the `obj/` directory contents and the compiled executable.
 
-### Data Persistence
+## Usage
 
-The project uses a file named `users.txt` to store user data and transactions. This file is created when the program is run for the first time and is automatically updated when users are added or transactions are made.
+On launch:
 
-## Example Usage
+```
+1. Login
+2. Register a new user
+3. Exit
+```
 
-Here’s an example of how the wallet system works:
+After a successful login:
 
-1. **Register Users**:
+```
+1. Add funds
+2. Deduct funds
+3. Transfer funds
+4. Show balance
+5. Show transaction history
+6. Merge accounts
+7. Logout
+8. Delete account
+```
 
-   ```cpp
-   wallet.registerUser("user1", "Alice", 100.0);
-   wallet.registerUser("user2", "Bob", 50.0);
-   ```
+When transferring funds, you will be prompted for the receiver's username, an amount (must be positive), and a date in `YYYY-MM-DD` format. The date is validated before the transfer proceeds.
 
-2. **Add Funds**:
+When merging accounts, you must provide the username **and password** of the second account to authenticate it before the merge is performed.
 
-   ```cpp
-   wallet.addFunds("user1", 20.0);
-   ```
+## Class Reference
 
-3. **Transfer Funds**:
+### `Transaction`
 
-   ```cpp
-   wallet.transferFunds("user1", "user2", 30.0, "2024-11-14");
-   ```
+```cpp
+Transaction(int id, float amt, const string &date, const string &senderID, const string &receiverID);
+```
 
-4. **Show Transaction History**:
+| Member | Description |
+|---|---|
+| `transactionID` | Auto-incremented unique ID |
+| `amount` | Transfer amount — throws `invalid_argument` if ≤ 0 |
+| `date` | Date string passed from caller |
+| `senderID` | Username of sender |
+| `receiverID` | Username of receiver |
+| `displayTransaction()` | Prints full transaction details to stdout |
+| `getTransactionID()` | Returns the transaction ID |
+| `getSenderID()` / `getReceiverID()` | Returns sender / receiver username |
 
-   ```cpp
-   user1.showTransactionHistory();
-   user2.showTransactionHistory();
-   ```
+### `User`
 
-5. **Merge Accounts**:
-   ```cpp
-   wallet.mergeAccounts("user1", "user2");
-   ```
+```cpp
+User(const string &username, const string &password, const string &name, float balance);
+```
 
-## Structure and Classes
+| Member | Description |
+|---|---|
+| `username` | Unique login identifier |
+| `password` | Account password |
+| `name` | Display name |
+| `balance` | Current wallet balance |
+| `transactionHistory` | `vector<Transaction>` of all associated transactions |
+| `addFunds(amount)` | Increments balance |
+| `deductFunds(amount)` | Decrements balance; returns `false` if insufficient |
+| `matches(username, password)` | Returns `true` if credentials match |
+| `addTransaction(t)` | Appends a transaction to history |
+| `showBalance()` | Prints current balance |
+| `showTransactionHistory()` | Prints all transactions |
+| `showDetails()` | Prints username, name, and balance |
+| `operator+(other)` | Returns a new user with combined balance |
 
-### `Transaction` Class
+### `Wallet`
 
-Represents a transaction with the following attributes:
+```cpp
+Wallet(); // Loads users from users.txt on construction
+```
 
-- `transactionID`: Unique identifier for the transaction.
-- `date`: Date of the transaction.
-- `senderID`: ID of the user sending the money.
-- `receiverID`: ID of the user receiving the money.
-- `amount`: The amount of money transferred.
+| Method | Description |
+|---|---|
+| `registerUser(username, password, name, balance)` | Adds new user; throws `runtime_error` if username taken |
+| `getUser(username, password)` | Returns pointer to matching user, or `nullptr` |
+| `isUsernameTaken(username)` | Returns `true` if username already exists |
+| `addFunds(username, amount)` | Adds funds; throws if user not found |
+| `deductFunds(username, amount)` | Deducts funds; throws on insufficient balance or user not found |
+| `transferFunds(sender, receiver, amount, date)` | Validates date, checks balance, logs transaction on both users, saves |
+| `removeUser(username)` | Deletes user; throws if not found |
+| `mergeAccounts(username1, username2)` | Merges `username2` into `username1` using `operator+`, removes `username2` |
+| `isValidDate(dateStr)` | Delegates to `Date::isValid()` |
 
-Methods:
+### `Date`
 
-- `displayTransaction()`: Prints the transaction details.
-- Overloaded `<<` operator to write transactions to a file.
+```cpp
+Date(int year, int month, int day);
+Date(const string &dateStr); // Parses "YYYY-MM-DD"; throws invalid_argument on bad format
+```
 
-### `User` Class
+| Method | Description |
+|---|---|
+| `isValid()` | Validates year ≥ 1, month 1–12, day within month range |
+| `isLeapYear(year)` | Returns `true` for leap years |
+| `toString()` | Returns zero-padded `YYYY-MM-DD` string |
 
-Represents a user with the following attributes:
+## Data Format
 
-- `name`: The user's name.
-- `userID`: Unique identifier for the user.
-- `password`: The user's secure password.
-- `balance`: The user's current balance.
-- `transactions`: A list of transactions the user has made or received.
+`users.txt` stores one user per line, space-separated:
 
-Methods:
+```
+username password name balance
+```
 
-- `operator+=()`: Overloaded operator to add funds to the user’s balance.
-- `deductBalance()`: Deducts an amount from the user’s balance if sufficient funds exist.
-- `addTransaction()`: Adds a transaction to the user's history.
-- `showBalance()`: Displays the user's current balance.
-- `showTransactionHistory()`: Displays the user's transaction history.
-- `operator+()`: Merges the account of two users.
+Example:
+```
+alice pass123 Alice 1500.5
+bob securepass Bob 800.0
+```
 
-### `Wallet` Class
+> **Note:** Transaction history is not persisted to file. Only balances are saved between sessions — transaction history is lost on exit.
 
-Manages all users and their transactions:
+## CI
 
-- `registerUser()`: Registers a new user.
-- `getUser()`: Retrieves a user by their ID.
-- `addFunds()`: Adds funds to a user's wallet.
-- `transferFunds()`: Transfers funds between two users.
-- `removeUser()`: Removes a user from the system.
-- `mergeAccounts()`: Merges two user accounts into one.
+This project uses GitHub Actions. The workflow runs on every push and pull request to `main` on `ubuntu-latest`, executing:
+
+```bash
+make
+make check
+make distcheck
+```
 
 ## Contributing
 
-We welcome contributions to this project. If you'd like to contribute, feel free to fork the repository, make changes, and submit a pull request. You can also report bugs or suggest new features by opening an issue.
+Fork the repository, make your changes, and open a pull request. Bug reports and feature requests can be submitted via issues.
 
 ## License
 
 This project is open-source.
-
-## Contact
-
-For questions, suggestions, or feedback, please reach out to:  
-**Email**: cs23b1015@iiitdm.ac.in
